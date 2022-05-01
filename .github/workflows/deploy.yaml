@@ -1,0 +1,31 @@
+name: Deploy Multi Container Fibonacci Calculator App
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v2
+
+      - name: Docker Hub Login
+        run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Run Project Tests
+        run: docker build -t vivekbhadauria/multi-docker-fib-app-test -f ./client/Dockerfile.dev ./client
+        run: docker run -e CI=true vivekbhadauria/multi-docker-fib-app-test npm run test
+
+      - name: Build Multiple Docker Images Per Service
+        run: docker build -t vivekbhadauria/multi-docker-fib-app-client ./client
+        run: docker build -t vivekbhadauria/multi-docker-fib-app-nginx ./nginx
+        run: docker build -t vivekbhadauria/multi-docker-fib-app-server ./server
+        run: docker build -t vivekbhadauria/multi-docker-fib-app-worker ./worker
+
+      - name: Push Created Docker Images To Docker Hub 
+        run: docker push vivekbhadauria/multi-docker-fib-app-client
+        run: docker push vivekbhadauria/multi-docker-fib-app-nginx
+        run: docker push vivekbhadauria/multi-docker-fib-app-server
+        run: docker push vivekbhadauria/multi-docker-fib-app-worker
